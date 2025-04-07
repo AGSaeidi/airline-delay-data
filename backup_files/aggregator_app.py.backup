@@ -1,0 +1,71 @@
+import pandas as pd
+import os
+import time
+import matplotlib.pyplot as plt
+
+def aggregate_data():
+    print("Starting aggregation process...")
+    input_file = '/data/processed/validated_data.csv'
+    output_dir = '/data/processed'
+    
+    # Wait for the input file to be available
+    while not os.path.exists(input_file):
+        print(f"Waiting for {input_file} to be available...")
+        time.sleep(10)
+    
+    # Give some time for file to be completely written
+    time.sleep(5)
+    
+    print(f"Reading data from {input_file}")
+    df = pd.read_csv(input_file)
+    
+    # Convert date column to datetime if it's not already
+    if 'FL_DATE' in df.columns and df['FL_DATE'].dtype != 'datetime64[ns]':
+        df['FL_DATE'] = pd.to_datetime(df['FL_DATE'])
+    
+    # List to store all aggregation results
+    aggregations = []
+    
+    # 1. Aggregate by carrier
+    carrier_agg = df.groupby('OP_CARRIER').agg({
+        'ARR_DELAY': ['mean', 'median'],
+        'DEP_DELAY': ['mean', 'median'],
+        'TOTAL_DELAY': ['mean', 'sum'],
+        'IS_DELAYED': ['mean', 'sum'],
+        'FL_DATE': 'count'
+    }).reset_index()
+    
+    # Flatten the multi-level columns
+    carrier_agg.columns = ['_'.join(col).strip('_') for col in carrier_agg.columns.values]
+    carrier_agg.rename(columns={'FL_DATE_count': 'FLIGHT_COUNT'}, inplace=True)
+    carrier_agg.rename(columns={'IS_DELAYED_mean': 'DELAY_RATE', 'IS_DELAYED_sum': 'DELAYED_FLIGHTS'}, inplace=True)
+    
+    aggregations.append(('carrier_stats', carrier_agg))
+    
+    # 2. Aggregate by origin airport
+    origin_agg = df.groupby('ORIGIN').agg({
+        'ARR_DELAY': ['mean', 'median'],
+        'DEP_DELAY': ['mean', 'median'],
+        'TOTAL_DELAY': 'mean',
+        'IS_DELAYED': 'mean',
+        'FL_DATE': 'count'
+    }).reset_index()
+    
+    origin_agg.columns = ['_'.join(col).strip('_') for col in origin_agg.columns.values]
+    origin_agg.rename(columns={'FL_DATE_count': 'FLIGHT_COUNT'}, inplace=True)
+    origin_agg.rename(columns={'IS_DELAYED_mean': 'DELAY_RATE'}, inplace=True)
+    
+    aggregations.append(('origin_stats', origin_agg))
+    
+    # 3. Aggregate by destination airport
+    dest_agg = df.groupby('DEST').agg({
+        'ARR_DELAY': ['mean', 'median'],
+        'DEP_DELAY': ['mean', 'median'],
+        'TOTAL_DELAY': 'mean',
+        'IS_DELAYED': 'mean',
+        'FL_DATE': 'count'
+    }).reset_index()
+    
+    dest_agg.columns = ['_'.join(col).strip('_') for col in dest_agg.columns.values]
+    dest_agg.rename(columns={'FL_DATE_count': 'FLIGHT_COUNT'}, inplace=True)
+    dest_agg.

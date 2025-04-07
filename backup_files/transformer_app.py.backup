@@ -1,0 +1,51 @@
+import pandas as pd
+import os
+import time
+
+def transform_data():
+    print("Starting transformation process...")
+    input_file = '/data/processed/extracted_data.csv'
+    output_file = '/data/processed/transformed_data.csv'
+    
+    # Wait for the input file to be available
+    while not os.path.exists(input_file):
+        print(f"Waiting for {input_file} to be available...")
+        time.sleep(10)
+    
+    # Give some time for file to be completely written
+    time.sleep(5)
+    
+    print(f"Reading data from {input_file}")
+    df = pd.read_csv(input_file)
+    
+    # Convert date column to datetime
+    df['FL_DATE'] = pd.to_datetime(df['FL_DATE'])
+    
+    # Convert time columns to proper format
+    time_cols = ['CRS_DEP_TIME', 'DEP_TIME', 'WHEELS_OFF', 'WHEELS_ON', 'CRS_ARR_TIME', 'ARR_TIME']
+    for col in time_cols:
+        if col in df.columns:
+            # Convert 4-digit time (HHMM) to proper time format
+            df[col] = df[col].astype(str).str.zfill(4)
+            df[col] = df[col].str[:2] + ':' + df[col].str[2:4]
+    
+    # Calculate total delay (sum of all delay types)
+    delay_cols = ['CARRIER_DELAY', 'WEATHER_DELAY', 'NAS_DELAY', 'SECURITY_DELAY', 'LATE_AIRCRAFT_DELAY']
+    df['TOTAL_DELAY'] = df[delay_cols].fillna(0).sum(axis=1)
+    
+    # Create a flag for delayed flights (ARR_DELAY > 15 minutes is considered delayed)
+    if 'ARR_DELAY' in df.columns:
+        df['IS_DELAYED'] = (df['ARR_DELAY'] > 15).astype(int)
+    
+    # Drop the unnamed column if it exists
+    if 'Unnamed: 27' in df.columns:
+        df = df.drop('Unnamed: 27', axis=1)
+    
+    print("Saving transformed data...")
+    df.to_csv(output_file, index=False)
+    print(f"Transformation complete. Data saved to {output_file}")
+
+if __name__ == "__main__":
+    # Wait for extractor to finish
+    time.sleep(10)
+    transform_data()

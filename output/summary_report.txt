@@ -1,0 +1,27 @@
+Processing Summary
+=================
+Processed at: 2025-04-07 12:11:55
+Records processed: 18
+Output file: /app/output/final_results.csv
+Columns in final dataset: OP_CARRIER, DEP_DELAY, ARR_DELAY, COUNT, PROCESSED_TIMESTAMP
+
+Numeric Statistics:
+=================
+DEP_DELAY:
+  Mean: 15.69
+  Min: 0.31
+  Max: 46.41
+  Std Dev: 10.09
+
+ARR_DELAY:
+  Mean: 12.80
+  Min: -4.11
+  Max: 48.84
+  Std Dev: 11.75
+
+COUNT:
+  Mean: 2777.72
+  Min: 603.00
+  Max: 8238.00
+  Std Dev: 1896.27
+

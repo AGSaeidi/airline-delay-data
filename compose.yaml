@@ -1,0 +1,67 @@
+ services:
+  extraction:
+    build: ./extraction
+    volumes:
+      - ./test-data:/app/data
+      - ./output:/app/output
+    environment:
+      - INPUT_FILE=/app/data/airline_delay_test.csv
+      - OUTPUT_FILE=/app/output/extracted_data.csv
+    mem_limit: 1g
+    restart: "no"
+
+  transformation:
+    build: ./transformation
+    volumes:
+      - ./test-data:/app/data
+      - ./output:/app/output
+    depends_on:
+      extraction:
+        condition: service_completed_successfully
+    environment:
+      - INPUT_FILE=/app/output/extracted_data.csv
+      - OUTPUT_FILE=/app/output/transformed_data.csv
+    mem_limit: 1g
+    restart: "no"
+
+  validation:
+    build: ./validation
+    volumes:
+      - ./test-data:/app/data
+      - ./output:/app/output
+    depends_on:
+      transformation:
+        condition: service_completed_successfully
+    environment:
+      - INPUT_FILE=/app/output/transformed_data.csv
+      - OUTPUT_FILE=/app/output/validated_data.csv
+    mem_limit: 1g
+    restart: "no"
+
+  aggregation:
+    build: ./aggregation
+    volumes:
+      - ./test-data:/app/data
+      - ./output:/app/output
+    depends_on:
+      validation:
+        condition: service_completed_successfully
+    environment:
+      - INPUT_FILE=/app/output/validated_data.csv
+      - OUTPUT_FILE=/app/output/aggregated_data.csv
+    mem_limit: 1g
+    restart: "no"
+
+  loading:
+    build: ./loading
+    volumes:
+      - ./test-data:/app/data
+      - ./output:/app/output
+    depends_on:
+      aggregation:
+        condition: service_completed_successfully
+    environment:
+      - INPUT_FILE=/app/output/aggregated_data.csv
+      - OUTPUT_FILE=/app/output/final_results.csv
+    mem_limit: 512m
+    restart: "no"

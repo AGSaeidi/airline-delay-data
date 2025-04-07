@@ -1,0 +1,32 @@
+import pandas as pd
+import os
+import time
+
+def extract_data():
+    print("Starting extraction process...")
+    input_file = '/data/input/sample_airline_delay.csv'
+    output_file = '/data/processed/extracted_data.csv'
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    
+    # Process in chunks for the large dataset (1 million rows)
+    chunk_size = 100000  # Adjust based on your memory constraints
+    
+    print(f"Reading data from {input_file} in chunks of {chunk_size}")
+    chunks = []
+    
+    for i, chunk in enumerate(pd.read_csv(input_file, chunksize=chunk_size)):
+        print(f"Processing chunk {i+1}")
+        chunks.append(chunk)
+        
+    # Combine chunks and save
+    print("Combining chunks and saving extracted data...")
+    combined_df = pd.concat(chunks)
+    combined_df.to_csv(output_file, index=False)
+    print(f"Extraction complete. Data saved to {output_file}")
+
+if __name__ == "__main__":
+    # Wait for a moment to ensure all services are up
+    time.sleep(5)
+    extract_data()
